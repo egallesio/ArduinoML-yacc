@@ -1,7 +1,7 @@
 <!--
             Author: Erick Gallesio [eg@unice.fr]
      Creation date: 28-Nov-2017 09:01
-  Last file update: 28-Nov-2017 11:26 (eg)
+  Last file update: 28-Nov-2017 12:40 (eg)
 -->
 
 # ArduinoML implementation in C (using Bison/Flex)
@@ -24,8 +24,8 @@ are:
       that their buffer is written in C.
     - a better error recovery (errors use the GNU format). 
 
-- comments use the `//` C++ syntax (for a better fonctification when
-  buffer in C mode) 
+- comments use the `//` C++ syntax (for a better fontification when
+  buffer is in C mode) 
 
 Here is a simple example: 
 
