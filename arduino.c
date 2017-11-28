@@ -3,7 +3,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Nov-2017 11:13
- * Last file update: 28-Nov-2017 11:01 (eg)
+ * Last file update: 28-Nov-2017 11:32 (eg)
  */
 
 #include <stdio.h>
@@ -14,7 +14,7 @@
 static int error_detected = 0;     ///< The number of errors while compiling a file
 char *input_path = NULL;           ///< Name of the input path or NULL if stdin
 
-void *__must_malloc(size_t sz, const char *func, const char *file, int line);
+static void *__must_malloc(size_t sz, const char *func, const char *file, int line);
 #define must_malloc(_sz)         (__must_malloc((_sz), __func__, __FILE__, __LINE__))
 
 // ======================================================================
@@ -104,7 +104,8 @@ struct arduino_state {
 
 static State *initial_state = NULL;
 
-
+// Make a new state named `var` with a list of `actions` and a `transition`
+// `initial` must be one if the state is the initial one
 State *make_state(char *var, Action *actions, Transition *transition, int initial) {
   State *p = must_malloc(sizeof(State));
 
@@ -116,6 +117,7 @@ State *make_state(char *var, Action *actions, Transition *transition, int initia
   return p;
 }
 
+// Add a state to a list of states
 State *add_state(State *list, State *a) {
   list->next = a;
   return list;
@@ -175,12 +177,15 @@ static void emit_loop(void) {
   printf("void loop() {\n  state_%s();\n}\n", initial_state->name);
 }
 
+
+/// emit the code for the parsed configuration
 void emit_code(char *appname, Brick *brick_list, State *state_list) {
   if (! initial_state)
     error_msg("no initial state declared");
 
   if (error_detected) {
-    fprintf(stderr, "**** %d error%s\n", error_detected, (error_detected>1) ? "s": "");
+    fprintf(stderr, "**** %d error%s\n", error_detected,
+                    (error_detected>1) ? "s": "");
     return;
   }
 
@@ -210,7 +215,7 @@ void error_msg(const char *format, ...) {
 }
 
 // Allocate memory and die if not possible
-void *__must_malloc(size_t sz, const char *func, const char *file, int line) {
+static void *__must_malloc(size_t sz, const char *func, const char *file, int line) {
   void *res = malloc(sz);
   if (!res) {
     fprintf(stderr, "**** function '%s' cannot allocate memory (in file '%s':%d)\n",

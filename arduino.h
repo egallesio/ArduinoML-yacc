@@ -3,7 +3,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Nov-2017 11:13
- * Last file update: 28-Nov-2017 11:02 (eg)
+ * Last file update: 28-Nov-2017 11:31 (eg)
  */
 
 #ifndef ARDUINO_H
@@ -50,14 +50,18 @@ Action *add_action(Action *list, Action *a);
 //
 typedef struct arduino_state State;
 
+// Make a new state named `var` with a list of `actions` and a `transition`
+// `initial` must be one if the state is the initial one
 State *make_state(char *var, Action *actions, Transition *transition, int initial);
+// Add a state to a list of states
 State *add_state(State *list, State *a);
 
 
-
+//
+// ========== CODE PRODUCTION ==========
+//
 
 /// emit the code for the parsed configuration
 void emit_code(char *appname, Brick *brick_list, State *state_list);
 
 #endif // ARDUINO_H
-
