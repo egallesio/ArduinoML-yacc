@@ -14,13 +14,18 @@ tools (but classical Yacc an Lex should be fine too).
 ## Syntax 
 
 The syntax used for this implementation is close to the G4 ANTLR one
-used in the original ArduinoML implementation. The main difference
-lies in the usage of (old school) semicolon as bricks and actions
-terminators. This permits to have:
+used in the original ArduinoML implementation. The main differences with it
+are: 
 
-- a better automatic indentation support in editors when they are told
-  that their buffer is written in C.
-- a better error recovery (errors use the GNU format). 
+- usage of (old school) semicolon as bricks and actions
+  terminators. This permits to have:
+
+    - a better automatic indentation support in editors when they are told
+      that their buffer is written in C.
+    - a better error recovery (errors use the GNU format). 
+
+- comments use the `//` C++ syntax (for a better fonctification when
+  buffer in C mode) 
 
 Here is a simple example: 
 
