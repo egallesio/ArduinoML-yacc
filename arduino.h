@@ -3,7 +3,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Nov-2017 11:13
- * Last file update: 28-Nov-2017 11:31 (eg)
+ * Last file update: 28-Nov-2017 11:47 (eg)
  */
 
 #ifndef ARDUINO_H
@@ -23,7 +23,7 @@ typedef struct arduino_brick Brick;
 /// Declare a new brick on port `number`
 Brick *make_brick(int number, enum port_assignment kind, char *name);
 /// Add a brick to a list of bricks
-Brick *add_brick(Brick *list, Brick *a);
+Brick *add_brick(Brick *b, Brick *list);
 
 //
 // ========== BRICKS ==========

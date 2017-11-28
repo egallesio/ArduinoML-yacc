@@ -3,12 +3,13 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Nov-2017 11:13
- * Last file update: 28-Nov-2017 11:32 (eg)
+ * Last file update: 28-Nov-2017 11:46 (eg)
  */
 
 #include <stdio.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <string.h>
 #include "arduino.h"
 
 static int error_detected = 0;     ///< The number of errors while compiling a file
@@ -28,6 +29,15 @@ struct arduino_brick {
 };
 
 
+/// Search name in the list of already declared bricks
+static int search_brick(char *name, Brick *list) {
+  for (Brick *p = list; p; p = p->next) {
+    if (strcmp(name, p->var) == 0) return 1;
+  }
+  return 0;
+}
+
+
 /// declare a new brick on port `number`
 Brick *make_brick(int number, enum port_assignment kind, char *name) {
   Brick *p = must_malloc(sizeof(Brick));
@@ -41,9 +51,18 @@ Brick *make_brick(int number, enum port_assignment kind, char *name) {
 
 
 /// Add a brick to a list of bricks
-Brick *add_brick(Brick *list, Brick *b) {
-  list->next = b;
-  return list;
+Brick *add_brick(Brick *b, Brick *list) {
+  // Check that the given variable is not already used
+  if (search_brick(b->var, list)) {
+      error_msg("name '%s' was already used", b->var);
+  }
+  // Check that the given port is not already used
+  for (Brick *p = list; p; p = p->next) {
+    if (p->port_number == b->port_number)
+      error_msg("port %d was already used by '%s'", p->port_number, b->var);
+  }
+  b->next = list;
+  return b;
 }
 
 

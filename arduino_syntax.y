@@ -2,7 +2,7 @@
 //
 //           Author: Erick Gallesio [eg@unice.fr]
 //    Creation date: 16-Nov-2017 17:54 (eg)
-// Last file update: 28-Nov-2017 11:13 (eg)
+// Last file update: 28-Nov-2017 11:49 (eg)
 
 %{
 #define  YYERROR_VERBOSE 1      // produce verbose syntax error messages
@@ -48,8 +48,8 @@ bricks:         bricks brick ';'                            { $$ = add_brick($2,
       |         /* empty */                                 { $$ = NULL; }
       ;
 
-brick:          KACTUATOR name ':' port                     { $$ = make_brick($4-1, actuator, $2); }
-     |          KSENSOR   name ':' port                     { $$ = make_brick($4-1, sensor, $2); }
+brick:          KACTUATOR name ':' port                     { $$ = make_brick($4, actuator, $2); }
+     |          KSENSOR   name ':' port                     { $$ = make_brick($4, sensor, $2); }
      ;
 
 states:         states state                                { $$ = add_state($2, $1); }
