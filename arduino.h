@@ -13,7 +13,7 @@ enum port_assignment {sensor, actuator };
 extern char *input_path;      ///< Name of the input path or NULL if stdin
 
 /// Display error message using the GNU conventions
-void error_msg(const char *format, ...);
+void error_msg(int lineno, const char *format, ...);
 
 //
 // ========== BRICKS ==========

@@ -2,7 +2,7 @@
 //
 //           Author: Erick Gallesio [eg@unice.fr]
 //    Creation date: 16-Nov-2017 17:54 (eg)
-// Last file update: 28-Nov-2017 11:49 (eg)
+// Last file update: 30-Nov-2017 15:27 (eg)
 
 %{
 #define  YYERROR_VERBOSE 1      // produce verbose syntax error messages
@@ -52,7 +52,7 @@ brick:          KACTUATOR name ':' port                     { $$ = make_brick($4
      |          KSENSOR   name ':' port                     { $$ = make_brick($4, sensor, $2); }
      ;
 
-states:         states state                                { $$ = add_state($2, $1); }
+states:         states state                                { $$ = add_state($1, $2); }
       |         /*empty */                                  { $$ = NULL; }
       ;
 
@@ -61,7 +61,7 @@ state:          name '{' actions  transition '}'            { $$ = make_state($1
       ;
 
 
-actions:        actions action ';'                          { $$ = add_action($2, $1); }
+actions:        actions action ';'                          { $$ = add_action($1, $2); }
        |        action ';'                                  { $$ = $1; }
        |        error ';'                                   { yyerrok; }
        ;
@@ -82,4 +82,4 @@ port:           PORT_NUMBER    ;
 
 
 %%
-void yyerror(const char *msg) { error_msg(msg); }
+void yyerror(const char *msg) { extern int yylineno; error_msg(yylineno, msg); }

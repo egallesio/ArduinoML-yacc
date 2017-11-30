@@ -3,7 +3,7 @@
  *
  *           Author: Erick Gallesio [eg@unice.fr]
  *    Creation date: 17-Nov-2017 11:13
- * Last file update: 28-Nov-2017 11:46 (eg)
+ * Last file update: 30-Nov-2017 15:36 (eg)
  */
 
 #include <stdio.h>
@@ -12,6 +12,7 @@
 #include <string.h>
 #include "arduino.h"
 
+extern int yylineno;               ///< line number (managed by lex)
 static int error_detected = 0;     ///< The number of errors while compiling a file
 char *input_path = NULL;           ///< Name of the input path or NULL if stdin
 
@@ -29,8 +30,8 @@ struct arduino_brick {
 };
 
 
-/// Search name in the list of already declared bricks
-static int search_brick(char *name, Brick *list) {
+/// Find name in the list of already declared bricks
+static int find_brick(char *name, Brick *list) {
   for (Brick *p = list; p; p = p->next) {
     if (strcmp(name, p->var) == 0) return 1;
   }
@@ -53,13 +54,13 @@ Brick *make_brick(int number, enum port_assignment kind, char *name) {
 /// Add a brick to a list of bricks
 Brick *add_brick(Brick *b, Brick *list) {
   // Check that the given variable is not already used
-  if (search_brick(b->var, list)) {
-      error_msg("name '%s' was already used", b->var);
+  if (find_brick(b->var, list)) {
+    error_msg(yylineno, "name '%s' was already used", b->var);
   }
   // Check that the given port is not already used
   for (Brick *p = list; p; p = p->next) {
     if (p->port_number == b->port_number)
-      error_msg("port %d was already used by '%s'", p->port_number, b->var);
+      error_msg(yylineno, "port %d was already used by '%s'", p->port_number, b->var);
   }
   b->next = list;
   return b;
@@ -70,18 +71,20 @@ Brick *add_brick(Brick *b, Brick *list) {
 //                            T R A N S I T I O N
 // ======================================================================
 struct arduino_transition {
+  int lineno;
   char *var_name;
   int sig_value;
-  char *state;
+  char *newstate;
 };
 
 /// Make a new transition (when `var` is `signal` goto `newstate`
 Transition *make_transition(char *var, int signal, char *newstate) {
   Transition *p = must_malloc(sizeof(Transition));
 
+  p->lineno    = yylineno;
   p->var_name  = var;
   p->sig_value = signal;
-  p->state     = newstate;
+  p->newstate  = newstate;
   return p;
 }
 
@@ -90,6 +93,7 @@ Transition *make_transition(char *var, int signal, char *newstate) {
 //                            A C T I O N
 // ======================================================================
 struct arduino_action {
+  int lineno;
   char *var_name;
   int sig_value;
   struct arduino_action *next;
@@ -99,6 +103,7 @@ struct arduino_action {
 Action *make_action(char *var, int signal) {
   Action *p = must_malloc(sizeof(Action));
 
+  p->lineno    = yylineno;
   p->var_name  = var;
   p->sig_value = signal;
   p->next      = NULL;
@@ -107,14 +112,20 @@ Action *make_action(char *var, int signal) {
 
 // Add an action to a list of actions
 Action *add_action(Action *list, Action *a) {
-  list->next = a;
-  return list;
+  if (list) {
+    Action *tmp = list;
+    while (tmp->next) tmp = tmp->next;
+    tmp->next = a;
+    return list;
+  }
+  return a;
 }
 
 // ======================================================================
 //                            S Τ A Τ E
 // ======================================================================
 struct arduino_state {
+  int lineno;
   char *name;
   Action *actions;
   Transition *transition;
@@ -123,11 +134,20 @@ struct arduino_state {
 
 static State *initial_state = NULL;
 
+static int find_state(char *name, State *list) {
+  for (State *p = list; p; p = p->next) {
+    if (strcmp(name, p->name) == 0) return 1;
+  }
+  return 0;
+}
+
+
 // Make a new state named `var` with a list of `actions` and a `transition`
 // `initial` must be one if the state is the initial one
 State *make_state(char *var, Action *actions, Transition *transition, int initial) {
   State *p = must_malloc(sizeof(State));
 
+  p->lineno     = yylineno;
   p->name       = var;
   p-> actions   = actions;
   p->transition = transition;
@@ -137,9 +157,44 @@ State *make_state(char *var, Action *actions, Transition *transition, int initia
 }
 
 // Add a state to a list of states
-State *add_state(State *list, State *a) {
-  list->next = a;
-  return list;
+State *add_state(State *list, State *s) {
+  if (list) {
+    State *tmp = list;
+    while (tmp->next) tmp = tmp->next;
+    tmp->next = s;
+    return list;
+  }
+  return s;
+}
+
+
+// ======================================================================
+//                     S E M A N T I C   C H E C K S
+// ======================================================================
+
+static void check_actions(Brick *brick_list, Action *list) {
+  for (Action *current = list; current; current = current->next) {
+    // Verify that the variable used in this action is declared
+    if (! find_brick(current->var_name, brick_list))
+      error_msg(list->lineno, "undeclared '%s'", current->var_name);
+  }
+}
+
+static void check_transition(Brick *brick_list, State *state_list, Transition *trans){
+  // Verify that the variable is declared
+  if (! find_brick(trans->var_name, brick_list))
+    error_msg(trans->lineno, "undeclared '%s'", trans->var_name);
+  // Verify that the next state exists
+  if (! find_state(trans->newstate, state_list))
+    error_msg(trans->lineno, "undeclared state '%s'", trans->newstate);
+}
+
+
+static void check_states(Brick *brick_list, State *state_list) {
+  for (State *current = state_list; current; current = current->next) {
+    check_actions(brick_list, current->actions);
+    check_transition(brick_list, state_list, current->transition);
+  }
 }
 
 
@@ -177,7 +232,7 @@ static void emit_transition(char *current_state, Transition *transition) {
   printf("  if (digitalRead(%s) == %s && guard) {\n", transition->var_name,
          transition->sig_value? "HIGH": "LOW");
   printf("    time = millis();\n");
-  printf("    state_%s();\n", transition->state);
+  printf("    state_%s();\n", transition->newstate);
   printf("  } else {\n");
   printf("    state_%s();\n", current_state);
   printf("  }\n");
@@ -199,8 +254,9 @@ static void emit_loop(void) {
 
 /// emit the code for the parsed configuration
 void emit_code(char *appname, Brick *brick_list, State *state_list) {
+  check_states(brick_list, state_list);
   if (! initial_state)
-    error_msg("no initial state declared");
+    error_msg(yylineno, "no initial state declared");
 
   if (error_detected) {
     fprintf(stderr, "**** %d error%s\n", error_detected,
@@ -221,12 +277,11 @@ void emit_code(char *appname, Brick *brick_list, State *state_list) {
 // ======================================================================
 
 /// Display error message using the GNU conventions
-void error_msg(const char *format, ...) {
-  extern int yylineno;
+void error_msg(int lineno, const char *format, ...) {
   va_list ap;
 
   if (input_path) fprintf(stderr, "%s:", input_path);
-  fprintf(stderr, "%d: ", yylineno);
+  fprintf(stderr, "%d: ", lineno);
   va_start(ap, format);  vfprintf(stderr, format, ap);  va_end(ap);
   fprintf(stderr, "\n");
 
