@@ -2,7 +2,7 @@
 //
 //           Author: Erick Gallesio [eg@unice.fr]
 //    Creation date: 16-Nov-2017 18:07
-// Last file update: 30-Nov-2017 13:18 (eg)
+// Last file update: 30-Nov-2017 15:40 (eg)
 
 application foo {
   // Declaring bricks
@@ -17,7 +17,7 @@ application foo {
     button2 is HIGH => off;
   }
 
-  -> off {
+  off {
     led3 <= LOW;
     led4 <= HIGH;
     button is HIGH => ON;

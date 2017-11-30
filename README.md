@@ -1,7 +1,7 @@
 <!--
             Author: Erick Gallesio [eg@unice.fr]
      Creation date: 28-Nov-2017 09:01
-  Last file update: 28-Nov-2017 12:43 (eg)
+  Last file update: 30-Nov-2017 15:46 (eg)
 -->
 
 # ArduinoML implementation in C (using Bison/Flex)
@@ -70,7 +70,7 @@ add something like a hundred of lines to this implementation.
 
 The examples are in the directory `Examples`:
 
-  - files named `test*.aML` should produce an output
-  - files names `fail*.amL` test variuous compilation errors
+  - files named `test*.aml` should produce an output
+  - files named `fail*.aml` test variuous compilation errors
   
 
