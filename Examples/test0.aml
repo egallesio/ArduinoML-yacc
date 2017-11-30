@@ -2,24 +2,21 @@
 //
 //           Author: Erick Gallesio [eg@unice.fr]
 //    Creation date: 16-Nov-2017 18:07
-// Last file update: 27-Nov-2017 18:52 (eg)
+// Last file update: 28-Nov-2017 08:40 (eg)
 
 application foo {
   // Declaring bricks
   sensor button : 9;
-  actuator led1 : 11;
-  actuator led2 : 12;
+  actuator led  : 11;
 
   // Declaring states
   on {
-    led1 <= HIGH;
-    led2 <= LOW;
+    led <= HIGH;
     button is HIGH => off;
   }
 
   -> off {
-    led1 <= LOW;
-    led2 <= HIGH;
+    led <= LOW;
     button is HIGH => on;
   }
 }
